@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlatList, Dimensions, View } from "react-native";
-import { Text } from "react-native-elements";
 import { VideoFeed } from "../../components/Shared";
 import { useAuth } from "../../hooks";
 import { Video } from "../../api";
@@ -11,6 +10,7 @@ const videoController = new Video();
 
 export const ForYouVideos = () => {
   const [videos, setVideos] = useState(null);
+  const [indexStart, setIndexStart] = useState(null);
   const { accessToken } = useAuth();
 
   useEffect(() => {
@@ -26,6 +26,10 @@ export const ForYouVideos = () => {
     }
   }, [accessToken]);
 
+  const onViewChanceRef = useRef(({ viewableItems }) => {
+    setIndexStart(viewableItems[0].index);
+  });
+
   if (!videos) return null;
 
   return (
@@ -33,11 +37,15 @@ export const ForYouVideos = () => {
       data={videos}
       decelerationRate="fast"
       keyExtractor={(_, index) => index.toString()}
-      renderItem={({ item, index }) => <VideoFeed index={index} item={item} />}
+      renderItem={({ item, index }) => (
+        <VideoFeed index={index} item={item} indexShow={indexStart} />
+      )}
       removeClippedSubviews={false}
       showsVerticalScrollIndicator={false}
       snapToInterval={height - ENV.TAB_MENU_HEIGHT}
+      onViewableItemsChanged={onViewChanceRef.current}
       viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
+      initialScrollIndex={indexStart}
       onScrollToIndexFailed={() => {}}
     />
   );
